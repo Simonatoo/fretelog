@@ -13,6 +13,9 @@ app.use(cors());
 app.use(express.json());
 
 // Routes
+const authController = require('../controllers/authController');
+router.post('/auth/login', authController.login);
+
 app.use('/api', routes);
 
 app.get('/', (req, res) => {
