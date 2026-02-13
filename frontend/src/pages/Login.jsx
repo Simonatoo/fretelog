@@ -99,10 +99,6 @@ const Login = () => {
                         {loading ? 'Entrando...' : 'Entrar'}
                     </button>
                 </form>
-
-                <div className="mt-6 text-center text-sm text-gray-500">
-                    <p>Login padrão: <span className="font-mono bg-gray-100 px-1 rounded">admin@frelog.com</span> / <span className="font-mono bg-gray-100 px-1 rounded">Admin</span></p>
-                </div>
             </div>
         </div>
     );
