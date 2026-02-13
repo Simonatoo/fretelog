@@ -8,6 +8,7 @@ import Employees from './pages/Employees';
 import Vehicles from './pages/Vehicles';
 import Companies from './pages/Companies';
 import Operations from './pages/Operations';
+import Calendar from './pages/Calendar';
 
 const ProtectedRoute = () => {
   const token = localStorage.getItem('token');
@@ -23,6 +24,7 @@ function App() {
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/operations" element={<Operations />} />
+          <Route path="/calendar" element={<Calendar />} />
           <Route path="/vehicles" element={<Vehicles />} />
           <Route path="/employees" element={<Employees />} />
           <Route path="/companies" element={<Companies />} />

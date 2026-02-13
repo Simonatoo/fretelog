@@ -1,6 +1,6 @@
 import React from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { Truck, Users, Buildings, ClipboardText, SignOut, ChartBar } from 'phosphor-react';
+import { Truck, Users, Buildings, ClipboardText, SignOut, ChartBar, CalendarBlank } from 'phosphor-react';
 
 const Layout = () => {
     const location = useLocation();
@@ -14,6 +14,7 @@ const Layout = () => {
     const menuItems = [
         { name: 'Dashboard', path: '/dashboard', icon: ChartBar },
         { name: 'Operações', path: '/operations', icon: ClipboardText },
+        { name: 'Calendário', path: '/calendar', icon: CalendarBlank },
         { name: 'Veículos', path: '/vehicles', icon: Truck },
         { name: 'Funcionários', path: '/employees', icon: Users },
         { name: 'Empresas', path: '/companies', icon: Buildings },
