@@ -7,6 +7,10 @@ const companiesController = require('../controllers/companiesController');
 const operationsController = require('../controllers/operationsController');
 const usersController = require('../controllers/usersController');
 const authMiddleware = require('../middlewares/authMiddleware');
+const authController = require('../controllers/authController');
+
+// Auth
+router.post('/auth/login', authController.login);
 
 // Employees
 router.use('/employees', authMiddleware);
