@@ -7,13 +7,51 @@ const Dashboard = () => {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
 
+    const [employees, setEmployees] = useState([]);
+
+    // Filter State
+    const [dateFilter, setDateFilter] = useState('month'); // default to month
+    const [selectedDriver, setSelectedDriver] = useState('');
+
     useEffect(() => {
-        fetchDashboardData();
+        fetchInitialData();
     }, []);
 
-    const fetchDashboardData = async () => {
+    useEffect(() => {
+        fetchDashboardData();
+    }, [dateFilter, selectedDriver]);
+
+    const fetchInitialData = async () => {
         try {
-            const response = await api.get('/dashboard');
+            const empRes = await api.get('/employees');
+            setEmployees(empRes.data);
+        } catch (error) {
+            console.error('Error fetching employees:', error);
+        }
+    };
+
+    const fetchDashboardData = async () => {
+        setLoading(true);
+        try {
+            // Calculate dates based on filter
+            const endDate = new Date();
+            let startDate = new Date();
+
+            if (dateFilter === 'fortnight') {
+                startDate.setDate(endDate.getDate() - 15);
+            } else if (dateFilter === 'month') {
+                startDate.setMonth(endDate.getMonth() - 1);
+            } else if (dateFilter === 'year') {
+                startDate.setFullYear(endDate.getFullYear() - 1);
+            }
+
+            const params = {
+                startDate: startDate.toISOString().split('T')[0],
+                endDate: endDate.toISOString().split('T')[0],
+                driverId: selectedDriver || undefined
+            };
+
+            const response = await api.get('/dashboard', { params });
             setData(response.data);
         } catch (error) {
             console.error('Error fetching dashboard data:', error);
@@ -53,7 +91,33 @@ const Dashboard = () => {
 
     return (
         <div className="space-y-6">
-            <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
+            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+                <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
+
+                {/* Filters */}
+                <div className="flex gap-4">
+                    <select
+                        className="border border-gray-300 rounded-md p-2 text-sm focus:ring-blue-500 focus:border-blue-500"
+                        value={dateFilter}
+                        onChange={(e) => setDateFilter(e.target.value)}
+                    >
+                        <option value="fortnight">Última Quinzena</option>
+                        <option value="month">Último Mês</option>
+                        <option value="year">Último Ano</option>
+                    </select>
+
+                    <select
+                        className="border border-gray-300 rounded-md p-2 text-sm focus:ring-blue-500 focus:border-blue-500"
+                        value={selectedDriver}
+                        onChange={(e) => setSelectedDriver(e.target.value)}
+                    >
+                        <option value="">Todos os Motoristas</option>
+                        {employees.map(emp => (
+                            <option key={emp.id} value={emp.id}>{emp.name}</option>
+                        ))}
+                    </select>
+                </div>
+            </div>
 
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
