@@ -20,7 +20,8 @@ const Operations = () => {
         operation_date: '',
         driver_value: '',
         support_value: '',
-        estimated_time: ''
+        estimated_time: '',
+        status: 'Pending'
     });
     const [editingId, setEditingId] = useState(null);
 
@@ -56,7 +57,8 @@ const Operations = () => {
                 operation_date: op.operation_date ? op.operation_date.split('T')[0] : '', // Format date for input
                 driver_value: op.driver_value,
                 support_value: op.support_value || '',
-                estimated_time: op.estimated_time || ''
+                estimated_time: op.estimated_time || '',
+                status: op.status || 'Pending'
             });
             setEditingId(op.id);
         } else {
@@ -69,7 +71,8 @@ const Operations = () => {
                 operation_date: '',
                 driver_value: '',
                 support_value: '',
-                estimated_time: ''
+                estimated_time: '',
+                status: 'Pending'
             });
             setEditingId(null);
         }
@@ -128,6 +131,7 @@ const Operations = () => {
         { key: 'driver_name', label: 'Motorista' },
         { key: 'operation_value', label: 'Valor Op.' },
         { key: 'formatted_date', label: 'Data' },
+        { key: 'status', label: 'Status' },
     ];
 
     return (
@@ -251,6 +255,19 @@ const Operations = () => {
                             value={formData.support_value}
                             onChange={(e) => setFormData({ ...formData, support_value: e.target.value })}
                         />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Status</label>
+                        <select
+                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2"
+                            value={formData.status}
+                            onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                        >
+                            <option value="Pending">Pendente</option>
+                            <option value="Completed">Concluído</option>
+                            <option value="Canceled">Cancelado</option>
+                        </select>
                     </div>
 
                     <div className="md:col-span-2">
