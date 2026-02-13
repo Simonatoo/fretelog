@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Trash } from 'phosphor-react';
+import { Trash, CalendarBlank } from 'phosphor-react';
 
 const EditableTable = ({ columns, data, onUpdate, onDelete }) => {
     const [editingCell, setEditingCell] = useState({ rowId: null, colKey: null });
     const [tempValue, setTempValue] = useState('');
     const inputRef = useRef(null);
+    const dateInputRef = useRef(null); // Ref for hidden date picker
 
     useEffect(() => {
         if (editingCell.rowId !== null && inputRef.current) {
@@ -12,10 +13,35 @@ const EditableTable = ({ columns, data, onUpdate, onDelete }) => {
         }
     }, [editingCell]);
 
+    // Helper to format Date -> dd/mm/yyyy
+    const formatDateToBr = (isoString) => {
+        if (!isoString) return '';
+        // Extract yyyy-mm-dd part from UTC to avoid timezone shift
+        const datePart = new Date(isoString).toISOString().split('T')[0];
+        const [year, month, day] = datePart.split('-');
+        return `${day}/${month}/${year}`;
+    };
+
+    // Helper to format yyyy-mm-dd -> dd/mm/yyyy
+    const formatYmdToBr = (ymdString) => {
+        if (!ymdString) return '';
+        const [year, month, day] = ymdString.split('-');
+        return `${day}/${month}/${year}`;
+    };
+
     const handleCellClick = (row, col) => {
         if (col.editable !== false) {
             setEditingCell({ rowId: row.id, colKey: col.key });
-            setTempValue(row[col.key] !== null && row[col.key] !== undefined ? row[col.key] : '');
+
+            let initialValue = row[col.key] !== null && row[col.key] !== undefined ? row[col.key] : '';
+
+            // If date, convert ISO to yyyy-mm-dd for input type="date"
+            if (col.type === 'date' && initialValue) {
+                // Initialize as dd/mm/yyyy for text editing
+                initialValue = formatDateToBr(initialValue);
+            }
+
+            setTempValue(initialValue);
         }
     };
 
@@ -39,6 +65,19 @@ const EditableTable = ({ columns, data, onUpdate, onDelete }) => {
             finalValue = finalValue.toString().replace(',', '.');
         }
 
+        // Handle Date Saving: Convert dd/mm/yyyy back to yyyy-mm-dd for API
+        if (col.type === 'date' && finalValue) {
+            // Check if matches dd/mm/yyyy
+            const brDatePattern = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+            const match = finalValue.match(brDatePattern);
+            if (match) {
+                const day = match[1];
+                const month = match[2];
+                const year = match[3];
+                finalValue = `${year}-${month}-${day}`; // ISO format for API
+            }
+        }
+
         if (finalValue !== row[col.key]) {
             onUpdate(row.id, col.key, finalValue);
         }
@@ -48,6 +87,29 @@ const EditableTable = ({ columns, data, onUpdate, onDelete }) => {
     const cancelEdit = () => {
         setEditingCell({ rowId: null, colKey: null });
         setTempValue('');
+    };
+
+    const handleDateIconClick = (e) => {
+        e.stopPropagation(); // Prevent bubbling causing blur issues
+        if (dateInputRef.current) {
+            // Try showPicker (modern browsers)
+            if (dateInputRef.current.showPicker) {
+                dateInputRef.current.showPicker();
+            } else {
+                // Fallback for older browsers (focus might trigger it on mobile)
+                dateInputRef.current.focus();
+            }
+        }
+    };
+
+    const handleHiddenDateChange = (e) => {
+        // e.target.value is yyyy-mm-dd
+        const newValue = e.target.value;
+        if (newValue) {
+            setTempValue(formatYmdToBr(newValue));
+            // Keep focus on the text input
+            if (inputRef.current) inputRef.current.focus();
+        }
     };
 
     const renderCellContent = (row, col) => {
@@ -73,15 +135,46 @@ const EditableTable = ({ columns, data, onUpdate, onDelete }) => {
                 );
             } else if (col.type === 'date') {
                 return (
-                    <input
-                        ref={inputRef}
-                        type="date"
-                        value={tempValue ? tempValue.split('T')[0] : ''}
-                        onChange={handleInputChange}
-                        onBlur={() => saveEdit(row, col)}
-                        onKeyDown={(e) => handleKeyDown(e, row, col)}
-                        className="w-full p-1 border-2 border-blue-500 rounded focus:outline-none"
-                    />
+                    <div className="relative w-full flex items-center">
+                        <input
+                            ref={inputRef}
+                            type="text"
+                            value={tempValue}
+                            placeholder="dd/mm/aaaa"
+                            onChange={(e) => {
+                                let v = e.target.value;
+                                // Remove everything that is not a number
+                                v = v.replace(/\D/g, "");
+                                // Apply mask dd/mm/yyyy
+                                if (v.length > 2) v = v.replace(/^(\d{2})(\d)/, "$1/$2");
+                                if (v.length > 5) v = v.replace(/^(\d{2})\/(\d{2})(\d)/, "$1/$2/$3");
+                                // Limit length
+                                if (v.length > 10) v = v.substr(0, 10);
+                                setTempValue(v);
+                            }}
+                            onBlur={() => saveEdit(row, col)}
+                            onKeyDown={(e) => handleKeyDown(e, row, col)}
+                            className="w-full p-1 pr-8 border-2 border-blue-500 rounded focus:outline-none"
+                            maxLength={10}
+                        />
+                        <button
+                            type="button"
+                            onMouseDown={(e) => e.preventDefault()} // Prevent button from stealing focus
+                            onClick={handleDateIconClick}
+                            className="absolute right-2 text-gray-500 hover:text-blue-600 focus:outline-none"
+                            tabIndex="-1" // Prevent tab stop
+                        >
+                            <CalendarBlank size={18} />
+                        </button>
+                        {/* Hidden date input for picker */}
+                        <input
+                            ref={dateInputRef}
+                            type="date"
+                            className="absolute top-0 left-0 w-0 h-0 opacity-0 pointer-events-none"
+                            onChange={handleHiddenDateChange}
+                            tabIndex="-1"
+                        />
+                    </div>
                 );
             }
             else {
@@ -112,7 +205,8 @@ const EditableTable = ({ columns, data, onUpdate, onDelete }) => {
 
         // Handle date display
         if (col.type === 'date' && displayValue) {
-            displayValue = new Date(displayValue).toLocaleDateString();
+            // Fix timezone issue: Treat date as UTC to avoid off-by-one error due to local timezone offset
+            displayValue = new Date(displayValue).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
         }
 
         // Handle currency/number display

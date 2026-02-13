@@ -185,7 +185,7 @@ const Dashboard = () => {
                                     <tr key={op.id}>
                                         <td className="py-3 text-gray-800">{op.company_name}</td>
                                         <td className="py-3 text-gray-600">
-                                            {op.operation_date ? new Date(op.operation_date).toLocaleDateString() : 'N/A'}
+                                            {op.operation_date ? new Date(op.operation_date).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : 'N/A'}
                                         </td>
                                         <td className="py-3 text-right font-medium text-gray-800">
                                             {formatCurrency(op.operation_value)}

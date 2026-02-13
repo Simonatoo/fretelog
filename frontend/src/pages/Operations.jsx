@@ -116,17 +116,13 @@ const Operations = () => {
         }
     };
 
-    // Debug logging
-    console.log('State - Companies:', companies);
-    console.log('State - Operations:', operations);
-
     // Enhance operations with related names
     const enhancedOperations = operations.map(op => ({
         ...op,
         company_name: companies.find(c => String(c.id) === String(op.company_id))?.name || 'N/A',
         vehicle_plate: vehicles.find(v => String(v.id) === String(op.vehicle_id))?.plate || 'N/A',
         driver_name: employees.find(e => String(e.id) === String(op.driver_id))?.name || 'N/A',
-        formatted_date: op.operation_date ? new Date(op.operation_date).toLocaleDateString() : 'N/A'
+        formatted_date: op.operation_date ? new Date(op.operation_date).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : 'N/A'
     }));
 
     const handleUpdateRow = async (id, key, value) => {
