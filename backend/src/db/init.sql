@@ -43,6 +43,7 @@ CREATE TABLE IF NOT EXISTS operations (
     driver_value NUMERIC(10, 2),
     support_value NUMERIC(10, 2),
     estimated_time VARCHAR(50), -- Could be interval or string, keeping simple string for now
+    status VARCHAR(50) DEFAULT 'Pending' CHECK (status IN ('Pending', 'Completed', 'Canceled')),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

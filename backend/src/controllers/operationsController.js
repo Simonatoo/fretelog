@@ -23,11 +23,11 @@ exports.getOperationById = async (req, res) => {
 };
 
 exports.createOperation = async (req, res) => {
-    const { companyId, VehicleId, driverId, supportId, operation_value, operation_date, driver_value, support_value, estimated_time } = req.body;
+    const { companyId, VehicleId, driverId, supportId, operation_value, operation_date, driver_value, support_value, estimated_time, status } = req.body;
     try {
         const result = await db.query(
-            'INSERT INTO operations (company_id, vehicle_id, driver_id, support_id, operation_value, operation_date, driver_value, support_value, estimated_time) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *',
-            [companyId, VehicleId, driverId, supportId, operation_value, operation_date, driver_value, support_value, estimated_time]
+            'INSERT INTO operations (company_id, vehicle_id, driver_id, support_id, operation_value, operation_date, driver_value, support_value, estimated_time, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *',
+            [companyId, VehicleId, driverId, supportId, operation_value, operation_date, driver_value, support_value, estimated_time, status || 'Pending']
         );
         res.status(201).json(result.rows[0]);
     } catch (err) {
@@ -37,11 +37,11 @@ exports.createOperation = async (req, res) => {
 
 exports.updateOperation = async (req, res) => {
     const { id } = req.params;
-    const { companyId, VehicleId, driverId, supportId, operation_value, operation_date, driver_value, support_value, estimated_time } = req.body;
+    const { companyId, VehicleId, driverId, supportId, operation_value, operation_date, driver_value, support_value, estimated_time, status } = req.body;
     try {
         const result = await db.query(
-            'UPDATE operations SET company_id = $1, vehicle_id = $2, driver_id = $3, support_id = $4, operation_value = $5, operation_date = $6, driver_value = $7, support_value = $8, estimated_time = $9 WHERE id = $10 RETURNING *',
-            [companyId, VehicleId, driverId, supportId, operation_value, operation_date, driver_value, support_value, estimated_time, id]
+            'UPDATE operations SET company_id = $1, vehicle_id = $2, driver_id = $3, support_id = $4, operation_value = $5, operation_date = $6, driver_value = $7, support_value = $8, estimated_time = $9, status = $10 WHERE id = $11 RETURNING *',
+            [companyId, VehicleId, driverId, supportId, operation_value, operation_date, driver_value, support_value, estimated_time, status, id]
         );
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'Operation not found' });
