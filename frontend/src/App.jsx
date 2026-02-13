@@ -10,7 +10,7 @@ import Companies from './pages/Companies';
 import Operations from './pages/Operations';
 
 const ProtectedRoute = () => {
-  const token = localStorage.getItem('google_token');
+  const token = localStorage.getItem('token');
   return token ? <Outlet /> : <Navigate to="/login" replace />;
 };
 
