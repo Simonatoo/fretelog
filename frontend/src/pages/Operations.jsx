@@ -162,7 +162,13 @@ const Operations = () => {
             type: 'select',
             options: employees.map(e => ({ value: e.id, label: e.name }))
         },
-        { key: 'operation_value', label: 'Valor Op.', type: 'number' },
+        {
+            key: 'support_id',
+            label: 'Ajudante',
+            type: 'select',
+            options: employees.map(e => ({ value: e.id, label: e.name }))
+        },
+        { key: 'operation_value', label: 'Valor Frete', type: 'number' },
         { key: 'toll', label: 'Pedágio', type: 'number' },
         { key: 'operation_date', label: 'Data', type: 'date' },
         {
