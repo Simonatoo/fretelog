@@ -1,7 +1,6 @@
 const jwt = require('jsonwebtoken');
 
 
-const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const authMiddleware = async (req, res, next) => {
     const authHeader = req.headers.authorization;
