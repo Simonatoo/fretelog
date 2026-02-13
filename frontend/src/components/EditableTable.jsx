@@ -15,7 +15,7 @@ const EditableTable = ({ columns, data, onUpdate, onDelete }) => {
     const handleCellClick = (row, col) => {
         if (col.editable !== false) {
             setEditingCell({ rowId: row.id, colKey: col.key });
-            setTempValue(row[col.key]);
+            setTempValue(row[col.key] !== null && row[col.key] !== undefined ? row[col.key] : '');
         }
     };
 
@@ -32,8 +32,15 @@ const EditableTable = ({ columns, data, onUpdate, onDelete }) => {
     };
 
     const saveEdit = (row, col) => {
-        if (tempValue !== row[col.key]) {
-            onUpdate(row.id, col.key, tempValue);
+        let finalValue = tempValue;
+
+        // Sanitize number inputs: replace comma with dot
+        if (col.type === 'number' && finalValue) {
+            finalValue = finalValue.toString().replace(',', '.');
+        }
+
+        if (finalValue !== row[col.key]) {
+            onUpdate(row.id, col.key, finalValue);
         }
         setEditingCell({ rowId: null, colKey: null });
     };
@@ -81,13 +88,12 @@ const EditableTable = ({ columns, data, onUpdate, onDelete }) => {
                 return (
                     <input
                         ref={inputRef}
-                        type={col.type === 'number' ? 'number' : 'text'}
+                        type="text" // Use text for everything to allow free typing (commas etc)
                         value={tempValue}
                         onChange={handleInputChange}
                         onBlur={() => saveEdit(row, col)}
                         onKeyDown={(e) => handleKeyDown(e, row, col)}
                         className="w-full p-1 border-2 border-blue-500 rounded focus:outline-none"
-                        step={col.type === 'number' ? "0.01" : undefined}
                     />
                 );
             }
