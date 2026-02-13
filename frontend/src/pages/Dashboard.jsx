@@ -70,16 +70,13 @@ const Dashboard = () => {
 
     const { stats, charts, recentOperations } = data;
 
-    const StatCard = ({ title, value, icon: Icon, color, subtext }) => (
+    const StatCard = ({ title, value, color, subtext }) => (
         <div className="bg-white p-6 rounded-lg shadow-md border-l-4" style={{ borderColor: color }}>
             <div className="flex justify-between items-start">
                 <div>
                     <p className="text-sm font-medium text-gray-500 uppercase">{title}</p>
                     <h3 className="text-2xl font-bold text-gray-800 mt-1">{value}</h3>
                     {subtext && <p className="text-xs text-gray-400 mt-1">{subtext}</p>}
-                </div>
-                <div className={`p-3 rounded-full bg-opacity-10`} style={{ backgroundColor: color, color: color }}>
-                    <Icon size={32} weight="fill" />
                 </div>
             </div>
         </div>
