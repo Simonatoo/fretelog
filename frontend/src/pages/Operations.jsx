@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
-import Table from '../components/Table';
+import EditableTable from '../components/EditableTable';
 import Modal from '../components/Modal';
 import { Plus } from 'phosphor-react';
 
@@ -116,22 +116,66 @@ const Operations = () => {
         }
     };
 
+    // Debug logging
+    console.log('State - Companies:', companies);
+    console.log('State - Operations:', operations);
+
     // Enhance operations with related names
     const enhancedOperations = operations.map(op => ({
         ...op,
-        company_name: companies.find(c => c.id === op.company_id)?.name || 'N/A',
-        vehicle_plate: vehicles.find(v => v.id === op.vehicle_id)?.plate || 'N/A',
-        driver_name: employees.find(e => e.id === op.driver_id)?.name || 'N/A',
+        company_name: companies.find(c => String(c.id) === String(op.company_id))?.name || 'N/A',
+        vehicle_plate: vehicles.find(v => String(v.id) === String(op.vehicle_id))?.plate || 'N/A',
+        driver_name: employees.find(e => String(e.id) === String(op.driver_id))?.name || 'N/A',
         formatted_date: op.operation_date ? new Date(op.operation_date).toLocaleDateString() : 'N/A'
     }));
 
+    const handleUpdateRow = async (id, key, value) => {
+        try {
+            console.log(`Sending update for ID ${id}: ${key} = ${value}`);
+            const res = await api.put(`/operations/${id}`, { [key]: value });
+            console.log('Update response:', res.data);
+
+            // Use server response to update local state (Source of Truth)
+            setOperations(prev => prev.map(op => op.id === id ? res.data : op));
+
+        } catch (error) {
+            console.error('Error updating row:', error);
+            alert('Erro ao atualizar registro. Verifique o console.');
+        }
+    };
+
     const columns = [
-        { key: 'company_name', label: 'Empresa' },
-        { key: 'vehicle_plate', label: 'Veículo' },
-        { key: 'driver_name', label: 'Motorista' },
-        { key: 'operation_value', label: 'Valor Op.' },
-        { key: 'formatted_date', label: 'Data' },
-        { key: 'status', label: 'Status' },
+        {
+            key: 'company_id',
+            label: 'Empresa',
+            type: 'select',
+            options: companies.map(c => ({ value: c.id, label: c.name }))
+        },
+        {
+            key: 'vehicle_id',
+            label: 'Veículo',
+            type: 'select',
+            options: vehicles.map(v => ({ value: v.id, label: v.plate }))
+        },
+        {
+            key: 'driver_id',
+            label: 'Motorista',
+            type: 'select',
+            options: employees.map(e => ({ value: e.id, label: e.name }))
+        },
+        { key: 'operation_value', label: 'Valor Op.', type: 'number' },
+        { key: 'operation_date', label: 'Data', type: 'date' },
+        {
+            key: 'status',
+            label: 'Status',
+            type: 'select',
+            options: [
+                { value: 'Pending', label: 'Pendente' },
+                { value: 'Completed', label: 'Concluído' },
+                { value: 'Canceled', label: 'Cancelado' }
+            ]
+        },
+        { key: 'estimated_time', label: 'Tempo Est.', type: 'text' }
     ];
 
     return (
@@ -147,10 +191,10 @@ const Operations = () => {
                 </button>
             </div>
 
-            <Table
+            <EditableTable
                 columns={columns}
                 data={enhancedOperations}
-                onEdit={handleOpenModal}
+                onUpdate={handleUpdateRow}
                 onDelete={handleDelete}
             />
 
