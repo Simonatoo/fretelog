@@ -113,9 +113,27 @@ const Employees = () => {
                         <label className="block text-sm font-medium text-gray-700">Telefone</label>
                         <input
                             type="text"
+                            required
                             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2"
                             value={formData.phone}
-                            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                            onChange={(e) => {
+                                let v = e.target.value;
+                                v = v.replace(/\D/g, ""); // Remove non-digits
+
+                                // Limit to 13 chars max (55 + 2 area + 9 phone)
+                                if (v.length > 13) v = v.substr(0, 13);
+
+                                // Apply formatting: +55 11 96766-5711
+                                if (v.length > 0) {
+                                    // Formatting logic
+                                    v = v.replace(/^(\d{2})(\d)/, "+$1 $2"); // +55 
+                                    v = v.replace(/(\d{2})(\d)/, "$1 $2"); // +55 11
+                                    v = v.replace(/(\d{5})(\d)/, "$1-$2"); // +55 11 96766-5711
+                                }
+
+                                setFormData({ ...formData, phone: v });
+                            }}
+                            maxLength={19}
                         />
                     </div>
                     <div>
