@@ -162,15 +162,10 @@ const Operations = () => {
             type: 'select',
             options: employees.map(e => ({ value: e.id, label: e.name }))
         },
+        { key: 'support_id', label: 'Ajudante', type: 'select', options: employees.map(e => ({ value: e.id, label: e.name })) },
+        { key: 'operation_value', label: 'Valor Frete', type: 'number' },
         { key: 'driver_value', label: 'Valor Motorista', type: 'number' },
         { key: 'support_value', label: 'Valor Ajudante', type: 'number' },
-        {
-            key: 'support_id',
-            label: 'Ajudante',
-            type: 'select',
-            options: employees.map(e => ({ value: e.id, label: e.name }))
-        },
-        { key: 'operation_value', label: 'Valor Frete', type: 'number' },
         { key: 'toll', label: 'Pedágio', type: 'number' },
         { key: 'operation_date', label: 'Data', type: 'date' },
         {
@@ -182,8 +177,7 @@ const Operations = () => {
                 { value: 'Completed', label: 'Concluído' },
                 { value: 'Canceled', label: 'Cancelado' }
             ]
-        },
-        { key: 'estimated_time', label: 'Tempo Est.', type: 'text' }
+        }
     ];
 
     return (
