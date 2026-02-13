@@ -126,7 +126,20 @@ const Vehicles = () => {
                             required
                             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2"
                             value={formData.plate}
-                            onChange={(e) => setFormData({ ...formData, plate: e.target.value })}
+                            onChange={(e) => {
+                                let v = e.target.value.toUpperCase();
+                                v = v.replace(/[^A-Z0-9]/g, ""); // Keep only Alphanumeric
+
+                                if (v.length > 7) v = v.substr(0, 7); // Limit 7 chars
+
+                                // Mask AAA-9999 or AAA-9A99
+                                if (v.length > 3) {
+                                    v = v.replace(/^([A-Z0-9]{3})([A-Z0-9]+)/, "$1-$2");
+                                }
+
+                                setFormData({ ...formData, plate: v });
+                            }}
+                            maxLength={8}
                         />
                     </div>
                     <div>
