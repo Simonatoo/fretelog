@@ -23,11 +23,11 @@ exports.getVehicleById = async (req, res) => {
 };
 
 exports.createVehicle = async (req, res) => {
-    const { plate, km, vehicle_type_id } = req.body;
+    const { plate, km, vehicle_type_id, status } = req.body;
     try {
         const result = await db.query(
-            'INSERT INTO vehicles (plate, km, vehicle_type_id) VALUES ($1, $2, $3) RETURNING *',
-            [plate, km, vehicle_type_id]
+            'INSERT INTO vehicles (plate, km, vehicle_type_id, status) VALUES ($1, $2, $3, $4) RETURNING *',
+            [plate, km, vehicle_type_id, status || 'Active']
         );
         res.status(201).json(result.rows[0]);
     } catch (err) {
@@ -37,11 +37,11 @@ exports.createVehicle = async (req, res) => {
 
 exports.updateVehicle = async (req, res) => {
     const { id } = req.params;
-    const { plate, km, vehicle_type_id } = req.body;
+    const { plate, km, vehicle_type_id, status } = req.body;
     try {
         const result = await db.query(
-            'UPDATE vehicles SET plate = $1, km = $2, vehicle_type_id = $3 WHERE id = $4 RETURNING *',
-            [plate, km, vehicle_type_id, id]
+            'UPDATE vehicles SET plate = $1, km = $2, vehicle_type_id = $3, status = $4 WHERE id = $5 RETURNING *',
+            [plate, km, vehicle_type_id, status, id]
         );
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'Vehicle not found' });

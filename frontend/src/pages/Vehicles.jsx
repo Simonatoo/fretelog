@@ -10,7 +10,7 @@ const Vehicles = () => {
     const [vehicles, setVehicles] = useState([]);
     const [vehicleTypes, setVehicleTypes] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [formData, setFormData] = useState({ plate: '', km: '', vehicle_type_id: '' });
+    const [formData, setFormData] = useState({ plate: '', km: '', vehicle_type_id: '', status: 'Active' });
     const [editingId, setEditingId] = useState(null);
 
     useEffect(() => {
@@ -41,11 +41,12 @@ const Vehicles = () => {
             setFormData({
                 plate: vehicle.plate,
                 km: vehicle.km,
-                vehicle_type_id: vehicle.vehicle_type_id
+                vehicle_type_id: vehicle.vehicle_type_id,
+                status: vehicle.status || 'Active'
             });
             setEditingId(vehicle.id);
         } else {
-            setFormData({ plate: '', km: '', vehicle_type_id: '' });
+            setFormData({ plate: '', km: '', vehicle_type_id: '', status: 'Active' });
             setEditingId(null);
         }
         setIsModalOpen(true);
@@ -53,7 +54,7 @@ const Vehicles = () => {
 
     const handleCloseModal = () => {
         setIsModalOpen(false);
-        setFormData({ plate: '', km: '', vehicle_type_id: '' });
+        setFormData({ plate: '', km: '', vehicle_type_id: '', status: 'Active' });
         setEditingId(null);
     };
 
@@ -104,6 +105,24 @@ const Vehicles = () => {
         }
     };
 
+    const getStatusLabel = (status) => {
+        switch (status) {
+            case 'Active': return 'Disponível';
+            case 'Driving': return 'Na rua';
+            case 'Maintenance': return 'Manutenção';
+            default: return status;
+        }
+    };
+
+    const getStatusColor = (status) => {
+        switch (status) {
+            case 'Active': return 'bg-green-100 text-green-700'; // Disponível
+            case 'Driving': return 'bg-blue-100 text-blue-700'; // Na rua
+            case 'Maintenance': return 'bg-yellow-100 text-yellow-700'; // Manutenção
+            default: return 'bg-gray-100 text-gray-700';
+        }
+    };
+
     return (
         <div>
             <div className="flex justify-between items-center mb-10">
@@ -121,7 +140,18 @@ const Vehicles = () => {
                 {enhancedVehicles.map((vehicle) => (
                     <div key={vehicle.id} className="bg-white rounded-xl shadow-lg p-6 relative flex flex-col justify-between hover:shadow-xl transition-shadow border border-gray-100 group">
 
+                        {/* Status Badge */}
+                        <div className={`absolute top-4 left-4 px-2 py-1 rounded-full text-xs font-bold uppercase ${getStatusColor(vehicle.status || 'Active')}`}>
+                            {getStatusLabel(vehicle.status || 'Active')}
+                        </div>
+
+                        {/* Pop-out Image Effect */}
                         <div className="absolute -top-12 right-4 w-24 h-24 transition-transform group-hover:scale-110 duration-300">
+                            {/*
+                                Placeholder for user images.
+                                Assumes images are in /public folder.
+                                Styling: Drop shadow to make it pop.
+                             */}
                             <img
                                 src={getVehicleImage(vehicle.type_name)}
                                 alt={vehicle.type_name}
@@ -216,6 +246,19 @@ const Vehicles = () => {
                             {vehicleTypes.map(type => (
                                 <option key={type.id} value={type.id}>{type.name}</option>
                             ))}
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Status</label>
+                        <select
+                            required
+                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2"
+                            value={formData.status}
+                            onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                        >
+                            <option value="Active">Disponível</option>
+                            <option value="Driving">Na rua</option>
+                            <option value="Maintenance">Manutenção</option>
                         </select>
                     </div>
                     <div className="flex justify-end pt-4">
