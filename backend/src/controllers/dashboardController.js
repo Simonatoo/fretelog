@@ -36,7 +36,7 @@ const getDashboardData = async (req, res) => {
         const financialsResult = await db.query(`
             SELECT 
                 SUM(operation_value) as total_revenue,
-                SUM(driver_value + COALESCE(support_value, 0)) as total_cost
+                SUM(driver_value + COALESCE(support_value, 0) + COALESCE(toll, 0)) as total_cost
             FROM operations ${whereClause}
         `, queryParams);
 
