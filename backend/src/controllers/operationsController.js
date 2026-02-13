@@ -23,11 +23,11 @@ exports.getOperationById = async (req, res) => {
 };
 
 exports.createOperation = async (req, res) => {
-    const { companyId, VehicleId, driverId, supportId, operation_value, operation_date, driver_value, support_value, estimated_time, status } = req.body;
+    const { companyId, VehicleId, driverId, supportId, operation_value, operation_date, driver_value, support_value, estimated_time, status, toll } = req.body;
     try {
         const result = await db.query(
-            'INSERT INTO operations (company_id, vehicle_id, driver_id, support_id, operation_value, operation_date, driver_value, support_value, estimated_time, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *',
-            [companyId, VehicleId, driverId, supportId, operation_value, operation_date, driver_value, support_value, estimated_time, status || 'Pending']
+            'INSERT INTO operations (company_id, vehicle_id, driver_id, support_id, operation_value, operation_date, driver_value, support_value, estimated_time, status, toll) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *',
+            [companyId, VehicleId, driverId, supportId, operation_value, operation_date, driver_value, support_value, estimated_time, status || 'Pending', toll || 0]
         );
         res.status(201).json(result.rows[0]);
     } catch (err) {
@@ -61,7 +61,7 @@ exports.updateOperation = async (req, res) => {
     const allowedColumns = [
         'company_id', 'vehicle_id', 'driver_id', 'support_id',
         'operation_value', 'operation_date', 'driver_value', 'support_value',
-        'estimated_time', 'status'
+        'estimated_time', 'status', 'toll'
     ];
 
     Object.keys(body).forEach(key => {

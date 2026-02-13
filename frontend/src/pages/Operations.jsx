@@ -58,7 +58,8 @@ const Operations = () => {
                 driver_value: op.driver_value,
                 support_value: op.support_value || '',
                 estimated_time: op.estimated_time || '',
-                status: op.status || 'Pending'
+                status: op.status || 'Pending',
+                toll: op.toll || ''
             });
             setEditingId(op.id);
         } else {
@@ -72,7 +73,8 @@ const Operations = () => {
                 driver_value: '',
                 support_value: '',
                 estimated_time: '',
-                status: 'Pending'
+                status: 'Pending',
+                toll: ''
             });
             setEditingId(null);
         }
@@ -91,6 +93,7 @@ const Operations = () => {
                 ...formData,
                 supportId: formData.supportId || null,
                 support_value: formData.support_value || 0,
+                toll: formData.toll || 0,
             };
 
             if (editingId) {
@@ -160,6 +163,7 @@ const Operations = () => {
             options: employees.map(e => ({ value: e.id, label: e.name }))
         },
         { key: 'operation_value', label: 'Valor Op.', type: 'number' },
+        { key: 'toll', label: 'Pedágio', type: 'number' },
         { key: 'operation_date', label: 'Data', type: 'date' },
         {
             key: 'status',
@@ -308,6 +312,18 @@ const Operations = () => {
                             <option value="Completed">Concluído</option>
                             <option value="Canceled">Cancelado</option>
                         </select>
+                    </div>
+
+                    <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700">Valor Pedágio (Opcional)</label>
+                        <input
+                            type="number"
+                            step="0.01"
+                            placeholder="0.00"
+                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2"
+                            value={formData.toll}
+                            onChange={(e) => setFormData({ ...formData, toll: e.target.value })}
+                        />
                     </div>
 
                     <div className="md:col-span-2">
