@@ -176,24 +176,34 @@ const Calendar = () => {
         const handleMouseMove = (e) => {
             if (!resizeState) return;
             const deltaY = e.clientY - resizeState.startY;
+            const SNAP_PIXELS = 40; // 30 minutes (80px per hour)
 
             if (resizeState.direction === 'bottom') {
                 let newHeight = resizeState.startHeight + deltaY;
-                if (newHeight < 20) newHeight = 20;
+                // Snap to 30 mins
+                newHeight = Math.round(newHeight / SNAP_PIXELS) * SNAP_PIXELS;
+                if (newHeight < SNAP_PIXELS) newHeight = SNAP_PIXELS;
+
                 setResizeState(prev => ({ ...prev, currentHeight: newHeight }));
             }
             else if (resizeState.direction === 'top') {
-                let newTop = resizeState.startTop + deltaY;
-                let newHeight = resizeState.startHeight - deltaY;
+                // Calculate snapped delta
+                // We want to snap the TOP position to the grid
+                let rawTop = resizeState.startTop + deltaY;
+                let snappedTop = Math.round(rawTop / SNAP_PIXELS) * SNAP_PIXELS;
+
+                // Calculate effective delta based on the snap
+                let effectiveDelta = snappedTop - resizeState.startTop;
+
+                let newHeight = resizeState.startHeight - effectiveDelta;
 
                 // Min height check
-                if (newHeight < 20) {
-                    // Don't allow moving top further down if height is min
-                    newHeight = 20;
-                    newTop = resizeState.startTop + (resizeState.startHeight - 20);
+                if (newHeight < SNAP_PIXELS) {
+                    newHeight = SNAP_PIXELS;
+                    snappedTop = resizeState.startTop + (resizeState.startHeight - SNAP_PIXELS);
                 }
 
-                setResizeState(prev => ({ ...prev, currentHeight: newHeight, currentTop: newTop }));
+                setResizeState(prev => ({ ...prev, currentHeight: newHeight, currentTop: snappedTop }));
             }
         };
 
