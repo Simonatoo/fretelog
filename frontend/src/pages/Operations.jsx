@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import EditableTable from '../components/EditableTable';
 import Modal from '../components/Modal';
-import { Plus } from 'phosphor-react';
+import { Plus, Funnel, X } from 'phosphor-react';
 
 const Operations = () => {
     const [operations, setOperations] = useState([]);
@@ -25,6 +25,17 @@ const Operations = () => {
     });
     const [editingId, setEditingId] = useState(null);
     const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
+
+    // Filter State
+    const [showFilters, setShowFilters] = useState(false);
+    const [filters, setFilters] = useState({
+        company_id: '',
+        vehicle_id: '',
+        driver_id: '',
+        date_start: '',
+        date_end: '',
+        status: ''
+    });
 
     useEffect(() => {
         fetchData();
@@ -152,8 +163,51 @@ const Operations = () => {
         setSortConfig({ key, direction });
     };
 
+    const handleFilterChange = (e) => {
+        const { name, value } = e.target;
+        setFilters(prev => ({ ...prev, [name]: value }));
+    };
+
+    const clearFilters = () => {
+        setFilters({
+            company_id: '',
+            vehicle_id: '',
+            driver_id: '',
+            date_start: '',
+            date_end: '',
+            status: ''
+        });
+    };
+
+    const filteredItems = React.useMemo(() => {
+        return enhancedOperations.filter(op => {
+            if (filters.company_id && String(op.company_id) !== String(filters.company_id)) return false;
+            if (filters.vehicle_id && String(op.vehicle_id) !== String(filters.vehicle_id)) return false;
+            if (filters.driver_id && String(op.driver_id) !== String(filters.driver_id)) return false;
+            if (filters.status && op.status !== filters.status) return false;
+
+            if (filters.date_start) {
+                const opDate = new Date(op.operation_date);
+                const startDate = new Date(filters.date_start);
+                // Reset time for comparison
+                startDate.setHours(0, 0, 0, 0);
+                if (opDate < startDate) return false;
+            }
+
+            if (filters.date_end) {
+                const opDate = new Date(op.operation_date);
+                const endDate = new Date(filters.date_end);
+                // Set to end of day
+                endDate.setHours(23, 59, 59, 999);
+                if (opDate > endDate) return false;
+            }
+
+            return true;
+        });
+    }, [enhancedOperations, filters]);
+
     const sortedOperations = React.useMemo(() => {
-        let sortableItems = [...enhancedOperations];
+        let sortableItems = [...filteredItems];
         if (sortConfig.key !== null) {
             sortableItems.sort((a, b) => {
                 let aValue = a[sortConfig.key];
@@ -181,7 +235,7 @@ const Operations = () => {
             });
         }
         return sortableItems;
-    }, [enhancedOperations, sortConfig]);
+    }, [filteredItems, sortConfig]);
 
     const columns = [
         {
@@ -229,14 +283,107 @@ const Operations = () => {
         <div>
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-2xl font-bold text-gray-800">Operações</h1>
-                <button
-                    onClick={() => handleOpenModal()}
-                    className="bg-blue-600 text-white px-4 py-2 rounded-md flex items-center gap-2 hover:bg-blue-700 transition-colors"
-                >
-                    <Plus size={20} />
-                    Nova Operação
-                </button>
+                <div className="flex gap-2">
+                    <button
+                        onClick={() => setShowFilters(!showFilters)}
+                        className={`px-4 py-2 rounded-md flex items-center gap-2 transition-colors border ${showFilters ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'}`}
+                    >
+                        <Funnel size={20} weight={showFilters ? "fill" : "regular"} />
+                        Filtros
+                    </button>
+                    <button
+                        onClick={() => handleOpenModal()}
+                        className="bg-blue-600 text-white px-4 py-2 rounded-md flex items-center gap-2 hover:bg-blue-700 transition-colors"
+                    >
+                        <Plus size={20} />
+                        Nova Operação
+                    </button>
+                </div>
             </div>
+
+            {/* Filters Panel */}
+            {showFilters && (
+                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-6 shadow-sm">
+                    <div className="flex justify-between items-center mb-4">
+                        <h2 className="text-sm font-bold text-gray-700 uppercase tracking-wide">Filtros Avançados</h2>
+                        <button onClick={clearFilters} className="text-xs text-blue-600 hover:text-blue-800 font-medium hover:underline">
+                            Limpar Filtros
+                        </button>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                        <div>
+                            <label className="block text-xs font-semibold text-gray-500 mb-1">Empresa</label>
+                            <select
+                                name="company_id"
+                                value={filters.company_id}
+                                onChange={handleFilterChange}
+                                className="w-full p-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+                            >
+                                <option value="">Todas</option>
+                                {companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-xs font-semibold text-gray-500 mb-1">Veículo</label>
+                            <select
+                                name="vehicle_id"
+                                value={filters.vehicle_id}
+                                onChange={handleFilterChange}
+                                className="w-full p-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+                            >
+                                <option value="">Todos</option>
+                                {vehicles.map(v => <option key={v.id} value={v.id}>{v.plate}</option>)}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-xs font-semibold text-gray-500 mb-1">Motorista</label>
+                            <select
+                                name="driver_id"
+                                value={filters.driver_id}
+                                onChange={handleFilterChange}
+                                className="w-full p-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+                            >
+                                <option value="">Todos</option>
+                                {employees.map(e => <option key={e.id} value={e.id}>{e.name}</option>)}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-xs font-semibold text-gray-500 mb-1">Status</label>
+                            <select
+                                name="status"
+                                value={filters.status}
+                                onChange={handleFilterChange}
+                                className="w-full p-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+                            >
+                                <option value="">Todos</option>
+                                <option value="Pending">Pendente</option>
+                                <option value="Completed">Concluído</option>
+                                <option value="Canceled">Cancelado</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-xs font-semibold text-gray-500 mb-1">Data Início</label>
+                            <input
+                                type="date"
+                                name="date_start"
+                                value={filters.date_start}
+                                onChange={handleFilterChange}
+                                className="w-full p-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-semibold text-gray-500 mb-1">Data Fim</label>
+                            <input
+                                type="date"
+                                name="date_end"
+                                value={filters.date_end}
+                                onChange={handleFilterChange}
+                                className="w-full p-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <EditableTable
                 columns={columns}
