@@ -374,8 +374,11 @@ const Calendar = () => {
                                         <div className={`font-bold ${color.text} truncate`}>{getCompanyName(op.company_id)}</div>
                                         <p className={`${color.text} truncate`}>R$ {op.operation_value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
                                         <div className="mt-1">
-                                            <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-white/50 ${color.text}`}>
-                                                {op.status}
+                                            <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${op.status === 'Completed' ? 'bg-green-100 text-green-700' :
+                                                op.status === 'Pending' ? 'bg-blue-100 text-blue-700' :
+                                                    'bg-red-100 text-red-700'
+                                                }`}>
+                                                {op.status === 'Pending' ? 'Na rua' : op.status === 'Completed' ? 'Concluído' : 'Cancelado'}
                                             </span>
                                         </div>
                                         <div className={`${color.subtext} truncate`}>{op.client}</div>
@@ -387,7 +390,6 @@ const Calendar = () => {
                 </div>
             </div>
 
-            {/* Operations editable */}
             {/* Operations editable */}
             {selectedOperation && (
                 <div className='flex flex-col gap-3 p-4 rounded-lg bg-white shadow-md border border-gray-200 w-80 shrink-0 h-fit'>
@@ -529,10 +531,9 @@ const Calendar = () => {
                             onChange={handleEditChange}
                             className='w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white'
                         >
-                            <option value="Pendente">Pendente</option>
-                            <option value="Em Andamento">Em Andamento</option>
-                            <option value="Concluída">Concluída</option>
-                            <option value="Cancelada">Cancelada</option>
+                            <option value="Pending">Pendente</option>
+                            <option value="Completed">Concluído</option>
+                            <option value="Canceled">Cancelado</option>
                         </select>
                     </div>
 
