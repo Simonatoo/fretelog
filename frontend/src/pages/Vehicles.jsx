@@ -165,7 +165,7 @@ const Vehicles = () => {
 
                         <div className="mt-8">
                             <h3 className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-1">{vehicle.type_name}</h3>
-                            <h2 className="text-3xl font-black text-gray-800 tracking-tight">{vehicle.plate}</h2>
+                            <h2 className="text-xl font-bold text-gray-800 tracking-tight">{vehicle.plate}</h2>
                         </div>
 
                         <div className="mt-6 flex justify-end gap-2 border-t border-gray-100 pt-4">
