@@ -168,6 +168,7 @@ const Operations = () => {
         { key: 'support_value', label: 'Valor Ajudante', type: 'number' },
         { key: 'toll', label: 'Pedágio', type: 'number' },
         { key: 'operation_date', label: 'Data/Hora', type: 'datetime' },
+        { key: 'estimated_time', label: 'Tempo Estimado', type: 'text' },
         {
             key: 'status',
             label: 'Status',

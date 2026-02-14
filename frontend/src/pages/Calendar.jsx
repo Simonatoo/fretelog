@@ -113,9 +113,9 @@ const Calendar = () => {
 
     const getOperationStyle = (operation) => {
         const opDate = new Date(operation.operation_date);
-        const dayIndex = opDate.getDay();
-        const startHour = opDate.getHours();
-        const startMin = opDate.getMinutes();
+        const dayIndex = opDate.getUTCDay();
+        const startHour = opDate.getUTCHours();
+        const startMin = opDate.getUTCMinutes();
 
         const hourHeight = 80; // matches h-20 class
         const top = (startHour * hourHeight) + ((startMin / 60) * hourHeight);
@@ -132,7 +132,7 @@ const Calendar = () => {
         // Remaining width is (100% - 64px)
         // Day width is (100% - 64px) / 7
 
-        const leftOffset = `calc(4rem + ((100% - 3rem) / 7 * ${dayIndex}))`;
+        const leftOffset = `calc(4rem + ((100% - 4rem) / 7 * ${dayIndex}))`;
         const width = `calc((100% - 4rem) / 7 - 4px)`; // -4px for gap
 
         return {
@@ -216,8 +216,8 @@ const Calendar = () => {
                 <div className="flex flex-1 overflow-auto">
                     <div className="min-w-[800px] w-full relative">
                         {/* Week Header */}
-                        <div className="grid grid-cols-8 border-b border-gray-200 sticky top-0 bg-white z-20">
-                            <div className="w-16 border-r border-gray-100"></div>
+                        <div className="grid grid-cols-[4rem_repeat(7,1fr)] border-b border-gray-200 sticky top-0 bg-white z-20">
+                            <div className="border-r border-gray-100"></div>
                             {weekDays.map((day) => {
                                 const today = isToday(day);
                                 return (
@@ -236,8 +236,8 @@ const Calendar = () => {
                         {/* Time Slots & Operations */}
                         <div className="relative">
                             {hours.map((hour) => (
-                                <div key={hour} className="grid grid-cols-8 h-20 group">
-                                    <div className="w-16 border-r border-gray-100 text-right pr-2 text-xs text-gray-400 font-medium -mt-2.5 relative">
+                                <div key={hour} className="grid grid-cols-[4rem_repeat(7,1fr)] h-20 group">
+                                    <div className="border-r border-gray-100 text-right pr-2 text-xs text-gray-400 font-medium -mt-2.5 relative">
                                         {formatTimeLabel(hour)}
                                     </div>
                                     {weekDays.map((day) => (
