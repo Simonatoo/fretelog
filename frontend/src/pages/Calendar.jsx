@@ -224,6 +224,8 @@ const Calendar = () => {
                 payload.operation_date = originalDate.toISOString();
             }
 
+            setResizeState(null);
+
             try {
                 // Optimistic update
                 setOperations(prev => prev.map(op => op.id === resizeState.opId ? updatedOp : op));
@@ -233,8 +235,6 @@ const Calendar = () => {
                 alert('Erro ao redimensionar operação');
                 fetchData(); // Revert
             }
-
-            setResizeState(null);
         };
 
         if (resizeState) {
