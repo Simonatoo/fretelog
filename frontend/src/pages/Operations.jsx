@@ -142,9 +142,9 @@ const Operations = () => {
 
     const handleUpdateRow = async (id, key, value) => {
         try {
-            console.log(`Sending update for ID ${id}: ${key} = ${value}`);
+
             const res = await api.put(`/operations/${id}`, { [key]: value });
-            console.log('Update response:', res.data);
+
 
             // Use server response to update local state (Source of Truth)
             setOperations(prev => prev.map(op => op.id === id ? res.data : op));
