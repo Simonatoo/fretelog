@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { CaretLeft, CaretRight, CheckSquare, Square } from 'phosphor-react';
+import { CaretLeft, CaretRight, CheckSquare, Square, X } from 'phosphor-react';
 import api from '../services/api';
+import MultiSelect from '../components/MultiSelect';
 
 const Calendar = () => {
     const [currentDate, setCurrentDate] = useState(new Date());
@@ -432,51 +433,16 @@ const Calendar = () => {
         }
     };
 
+
+
     const filteredOperations = getFilteredOperations();
 
     return (
-        <div className="flex h-[calc(100vh-100px)]">
-            {/* Sidebar Filters */}
-            <div className="w-64 bg-white rounded-l-lg shadow-md border-y border-l border-gray-200 p-4 flex flex-col">
-                <h2 className="text-lg font-bold text-gray-800 mb-4">Veículos</h2>
-
-                <div
-                    className="flex items-center gap-2 mb-3 cursor-pointer hover:bg-gray-50 p-2 rounded-md transition-colors"
-                    onClick={toggleAllVehicles}
-                >
-                    {selectedVehicleIds.size === vehicles.length ? (
-                        <CheckSquare size={20} className="text-blue-600" weight="fill" />
-                    ) : (
-                        <Square size={20} className="text-gray-400" />
-                    )}
-                    <span className="text-sm font-medium text-gray-700">Selecionar Todos</span>
-                </div>
-
-                <div className="flex-1 overflow-y-auto space-y-1">
-                    {vehicles.map(vehicle => (
-                        <div
-                            key={vehicle.id}
-                            className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded-md transition-colors"
-                            onClick={() => toggleVehicle(vehicle.id)}
-                        >
-                            {selectedVehicleIds.has(vehicle.id) ? (
-                                <CheckSquare size={20} className="text-blue-600" weight="fill" />
-                            ) : (
-                                <Square size={20} className="text-gray-400" />
-                            )}
-                            <div className="flex flex-col">
-                                <span className="text-sm text-gray-700 font-medium">{vehicle.plate}</span>
-                                <span className="text-xs text-gray-500 capitalize">{vehicle.type}</span>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </div>
-
+        <div className="flex h-full relative">
             {/* Calendar Area */}
-            <div className="flex-1 flex flex-col bg-white rounded-r-lg shadow-md border-y border-r border-gray-200 overflow-hidden">
+            <div className="flex-1 flex flex-col bg-white border-l border-gray-200 overflow-hidden">
                 {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-white">
                     <div className="flex items-center gap-4">
                         <h1 className="text-2xl font-bold text-gray-800">
                             {startOfWeek.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
@@ -492,6 +458,14 @@ const Calendar = () => {
                                 <CaretRight size={20} />
                             </button>
                         </div>
+                        <div className="border-l border-gray-200 h-6 mx-2"></div>
+                        <MultiSelect
+                            label="Veículos"
+                            options={vehicles.map(v => ({ id: v.id, label: v.plate, subLabel: v.type }))}
+                            selectedIds={selectedVehicleIds}
+                            onChange={toggleVehicle}
+                            onToggleAll={toggleAllVehicles}
+                        />
                     </div>
                 </div>
 
@@ -520,13 +494,13 @@ const Calendar = () => {
                         <div className="relative">
                             {hours.map((hour) => (
                                 <div key={hour} className="grid grid-cols-[4rem_repeat(7,1fr)] h-20 group">
-                                    <div className="border-r border-gray-100 text-right pr-2 text-xs text-gray-400 font-medium -mt-2.5 relative">
+                                    <div className="border-r border-gray-100 text-right pr-2 text-xs text-gray-500 font-medium -mt-2.5 relative">
                                         {formatTimeLabel(hour)}
                                     </div>
                                     {weekDays.map((day) => (
                                         <div
                                             key={`${day.toISOString()}-${hour}`}
-                                            className="border-r border-b border-gray-100 relative hover:bg-gray-50 transition-colors cursor-pointer"
+                                            className="border-r border-b border-gray-100 relative hover:bg-slate-100 transition-colors cursor-pointer"
                                             onClick={() => handleSlotClick(day, hour)}
                                         ></div>
                                     ))}
