@@ -435,9 +435,9 @@ const Calendar = () => {
     const filteredOperations = getFilteredOperations();
 
     return (
-        <div className="flex h-[calc(100vh-100px)] gap-4">
+        <div className="flex h-[calc(100vh-100px)]">
             {/* Sidebar Filters */}
-            <div className="w-64 bg-white rounded-lg shadow-md border border-gray-200 p-4 flex flex-col">
+            <div className="w-64 bg-white rounded-l-lg shadow-md border-y border-l border-gray-200 p-4 flex flex-col">
                 <h2 className="text-lg font-bold text-gray-800 mb-4">Veículos</h2>
 
                 <div
@@ -474,7 +474,7 @@ const Calendar = () => {
             </div>
 
             {/* Calendar Area */}
-            <div className="flex-1 flex flex-col bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
+            <div className="flex-1 flex flex-col bg-white rounded-r-lg shadow-md border-y border-r border-gray-200 overflow-hidden">
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
                     <div className="flex items-center gap-4">
