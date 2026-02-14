@@ -16,10 +16,22 @@ const EditableTable = ({ columns, data, onUpdate, onDelete }) => {
     // Helper to format Date -> dd/mm/yyyy
     const formatDateToBr = (isoString) => {
         if (!isoString) return '';
-        // Extract yyyy-mm-dd part from UTC to avoid timezone shift
         const datePart = new Date(isoString).toISOString().split('T')[0];
         const [year, month, day] = datePart.split('-');
         return `${day}/${month}/${year}`;
+    };
+
+    // Helper to format Date -> dd/mm/yyyy HH:mm
+    const formatDateTimeToBr = (isoString) => {
+        if (!isoString) return '';
+        const d = new Date(isoString);
+        // Adjust for timezone if needed, but keeping it simple for now or using UTC
+        const day = String(d.getUTCDate()).padStart(2, '0');
+        const month = String(d.getUTCMonth() + 1).padStart(2, '0');
+        const year = d.getUTCFullYear();
+        const hours = String(d.getUTCHours()).padStart(2, '0');
+        const minutes = String(d.getUTCMinutes()).padStart(2, '0');
+        return `${day}/${month}/${year} ${hours}:${minutes}`;
     };
 
     // Helper to format yyyy-mm-dd -> dd/mm/yyyy
@@ -35,10 +47,11 @@ const EditableTable = ({ columns, data, onUpdate, onDelete }) => {
 
             let initialValue = row[col.key] !== null && row[col.key] !== undefined ? row[col.key] : '';
 
-            // If date, convert ISO to yyyy-mm-dd for input type="date"
+            // If date or datetime, convert ISO to respective format for text editing
             if (col.type === 'date' && initialValue) {
-                // Initialize as dd/mm/yyyy for text editing
                 initialValue = formatDateToBr(initialValue);
+            } else if (col.type === 'datetime' && initialValue) {
+                initialValue = formatDateTimeToBr(initialValue);
             }
 
             setTempValue(initialValue);
@@ -78,6 +91,22 @@ const EditableTable = ({ columns, data, onUpdate, onDelete }) => {
             }
         }
 
+
+        // Handle DateTime Saving: Convert dd/mm/yyyy HH:mm back to ISO
+        if (col.type === 'datetime' && finalValue) {
+            // Pattern: dd/mm/yyyy HH:mm
+            const brDateTimePattern = /^(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2})$/;
+            const match = finalValue.match(brDateTimePattern);
+            if (match) {
+                const day = match[1];
+                const month = match[2];
+                const year = match[3];
+                const hours = match[4];
+                const minutes = match[5];
+                finalValue = `${year}-${month}-${day}T${hours}:${minutes}:00.000Z`; // ISO format
+            }
+        }
+
         if (finalValue !== row[col.key]) {
             onUpdate(row.id, col.key, finalValue);
         }
@@ -106,7 +135,20 @@ const EditableTable = ({ columns, data, onUpdate, onDelete }) => {
         // e.target.value is yyyy-mm-dd
         const newValue = e.target.value;
         if (newValue) {
-            setTempValue(formatYmdToBr(newValue));
+            if (editingCell.colKey && columns.find(c => c.key === editingCell.colKey)?.type === 'datetime') {
+                // For datetime-local, value is yyyy-mm-ddThh:mm
+                const dateObj = new Date(newValue);
+                // Format manually to dd/mm/yyyy HH:mm
+                const day = String(dateObj.getDate()).padStart(2, '0');
+                const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+                const year = dateObj.getFullYear();
+                const hours = String(dateObj.getHours()).padStart(2, '0');
+                const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+                setTempValue(`${day}/${month}/${year} ${hours}:${minutes}`);
+            } else {
+                // Date only
+                setTempValue(formatYmdToBr(newValue));
+            }
             // Keep focus on the text input
             if (inputRef.current) inputRef.current.focus();
         }
@@ -133,43 +175,51 @@ const EditableTable = ({ columns, data, onUpdate, onDelete }) => {
                         ))}
                     </select>
                 );
-            } else if (col.type === 'date') {
+            } else if (col.type === 'date' || col.type === 'datetime') {
+                const isDateTime = col.type === 'datetime';
+                const maskLength = isDateTime ? 16 : 10;
                 return (
                     <div className="relative w-full flex items-center">
                         <input
                             ref={inputRef}
                             type="text"
                             value={tempValue}
-                            placeholder="dd/mm/aaaa"
+                            placeholder={isDateTime ? "dd/mm/aaaa hh:mm" : "dd/mm/aaaa"}
                             onChange={(e) => {
                                 let v = e.target.value;
-                                // Remove everything that is not a number
                                 v = v.replace(/\D/g, "");
-                                // Apply mask dd/mm/yyyy
-                                if (v.length > 2) v = v.replace(/^(\d{2})(\d)/, "$1/$2");
-                                if (v.length > 5) v = v.replace(/^(\d{2})\/(\d{2})(\d)/, "$1/$2/$3");
-                                // Limit length
-                                if (v.length > 10) v = v.substr(0, 10);
+                                // Apply mask
+                                if (isDateTime) {
+                                    if (v.length > 2) v = v.replace(/^(\d{2})(\d)/, "$1/$2");
+                                    if (v.length > 5) v = v.replace(/^(\d{2})\/(\d{2})(\d)/, "$1/$2/$3");
+                                    if (v.length > 10) v = v.replace(/^(\d{2})\/(\d{2})\/(\d{4})(\d)/, "$1/$2/$3 $4");
+                                    if (v.length > 13) v = v.replace(/^(\d{2})\/(\d{2})\/(\d{4}) (\d{2})(\d)/, "$1/$2/$3 $4:$5");
+                                    if (v.length > 16) v = v.substr(0, 16);
+                                } else {
+                                    if (v.length > 2) v = v.replace(/^(\d{2})(\d)/, "$1/$2");
+                                    if (v.length > 5) v = v.replace(/^(\d{2})\/(\d{2})(\d)/, "$1/$2/$3");
+                                    if (v.length > 10) v = v.substr(0, 10);
+                                }
                                 setTempValue(v);
                             }}
                             onBlur={() => saveEdit(row, col)}
                             onKeyDown={(e) => handleKeyDown(e, row, col)}
                             className="w-full p-1 pr-8 border-2 border-blue-500 rounded focus:outline-none"
-                            maxLength={10}
+                            maxLength={maskLength}
                         />
                         <button
                             type="button"
-                            onMouseDown={(e) => e.preventDefault()} // Prevent button from stealing focus
+                            onMouseDown={(e) => e.preventDefault()}
                             onClick={handleDateIconClick}
                             className="absolute right-2 text-gray-500 hover:text-blue-600 focus:outline-none"
-                            tabIndex="-1" // Prevent tab stop
+                            tabIndex="-1"
                         >
                             <CalendarBlank size={18} />
                         </button>
                         {/* Hidden date input for picker */}
                         <input
                             ref={dateInputRef}
-                            type="date"
+                            type={isDateTime ? "datetime-local" : "date"}
                             className="absolute top-0 left-0 w-0 h-0 opacity-0 pointer-events-none"
                             onChange={handleHiddenDateChange}
                             tabIndex="-1"
@@ -205,8 +255,9 @@ const EditableTable = ({ columns, data, onUpdate, onDelete }) => {
 
         // Handle date display
         if (col.type === 'date' && displayValue) {
-            // Fix timezone issue: Treat date as UTC to avoid off-by-one error due to local timezone offset
             displayValue = new Date(displayValue).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+        } else if (col.type === 'datetime' && displayValue) {
+            displayValue = new Date(displayValue).toLocaleString('pt-BR', { timeZone: 'UTC' });
         }
 
         // Handle currency/number display

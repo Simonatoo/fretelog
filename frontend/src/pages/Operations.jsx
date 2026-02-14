@@ -54,7 +54,7 @@ const Operations = () => {
                 driverId: op.driver_id,
                 supportId: op.support_id || '',
                 operation_value: op.operation_value,
-                operation_date: op.operation_date ? op.operation_date.split('T')[0] : '', // Format date for input
+                operation_date: op.operation_date ? new Date(op.operation_date).toISOString().slice(0, 16) : '', // Format for datetime-local
                 driver_value: op.driver_value,
                 support_value: op.support_value || '',
                 estimated_time: op.estimated_time || '',
@@ -125,7 +125,7 @@ const Operations = () => {
         company_name: companies.find(c => String(c.id) === String(op.company_id))?.name || 'N/A',
         vehicle_plate: vehicles.find(v => String(v.id) === String(op.vehicle_id))?.plate || 'N/A',
         driver_name: employees.find(e => String(e.id) === String(op.driver_id))?.name || 'N/A',
-        formatted_date: op.operation_date ? new Date(op.operation_date).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : 'N/A'
+        formatted_date: op.operation_date ? new Date(op.operation_date).toLocaleString('pt-BR', { timeZone: 'UTC' }) : 'N/A'
     }));
 
     const handleUpdateRow = async (id, key, value) => {
@@ -167,7 +167,7 @@ const Operations = () => {
         { key: 'driver_value', label: 'Valor Motorista', type: 'number' },
         { key: 'support_value', label: 'Valor Ajudante', type: 'number' },
         { key: 'toll', label: 'Pedágio', type: 'number' },
-        { key: 'operation_date', label: 'Data', type: 'date' },
+        { key: 'operation_date', label: 'Data/Hora', type: 'datetime' },
         {
             key: 'status',
             label: 'Status',
@@ -258,9 +258,9 @@ const Operations = () => {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700">Data Operação</label>
+                        <label className="block text-sm font-medium text-gray-700">Data e Hora da Operação</label>
                         <input
-                            type="date"
+                            type="datetime-local"
                             required
                             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2"
                             value={formData.operation_date}
