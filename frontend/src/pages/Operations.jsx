@@ -24,6 +24,7 @@ const Operations = () => {
         status: 'Pending'
     });
     const [editingId, setEditingId] = useState(null);
+    const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
 
     useEffect(() => {
         fetchData();
@@ -143,27 +144,69 @@ const Operations = () => {
         }
     };
 
+    const handleSort = (key) => {
+        let direction = 'ascending';
+        if (sortConfig.key === key && sortConfig.direction === 'ascending') {
+            direction = 'descending';
+        }
+        setSortConfig({ key, direction });
+    };
+
+    const sortedOperations = React.useMemo(() => {
+        let sortableItems = [...enhancedOperations];
+        if (sortConfig.key !== null) {
+            sortableItems.sort((a, b) => {
+                let aValue = a[sortConfig.key];
+                let bValue = b[sortConfig.key];
+
+                // Handle special sort keys that map to names instead of IDs
+                if (sortConfig.key === 'company_id') {
+                    aValue = a.company_name;
+                    bValue = b.company_name;
+                } else if (sortConfig.key === 'vehicle_id') {
+                    aValue = a.vehicle_plate;
+                    bValue = b.vehicle_plate;
+                } else if (sortConfig.key === 'driver_id') {
+                    aValue = a.driver_name;
+                    bValue = b.driver_name;
+                }
+
+                if (aValue < bValue) {
+                    return sortConfig.direction === 'ascending' ? -1 : 1;
+                }
+                if (aValue > bValue) {
+                    return sortConfig.direction === 'ascending' ? 1 : -1;
+                }
+                return 0;
+            });
+        }
+        return sortableItems;
+    }, [enhancedOperations, sortConfig]);
+
     const columns = [
         {
             key: 'company_id',
             label: 'Empresa',
             type: 'select',
-            options: companies.map(c => ({ value: c.id, label: c.name }))
+            options: companies.map(c => ({ value: c.id, label: c.name })),
+            sortable: true
         },
         {
             key: 'vehicle_id',
             label: 'Veículo',
             type: 'select',
-            options: vehicles.map(v => ({ value: v.id, label: v.plate }))
+            options: vehicles.map(v => ({ value: v.id, label: v.plate })),
+            sortable: true
         },
         {
             key: 'driver_id',
             label: 'Motorista',
             type: 'select',
-            options: employees.map(e => ({ value: e.id, label: e.name }))
+            options: employees.map(e => ({ value: e.id, label: e.name })),
+            sortable: true
         },
         { key: 'support_id', label: 'Ajudante', type: 'select', options: employees.map(e => ({ value: e.id, label: e.name })) },
-        { key: 'operation_value', label: 'Valor Frete', type: 'number' },
+        { key: 'operation_value', label: 'Valor Frete', type: 'number', sortable: true },
         { key: 'driver_value', label: 'Valor Motorista', type: 'number' },
         { key: 'support_value', label: 'Valor Ajudante', type: 'number' },
         { key: 'toll', label: 'Pedágio', type: 'number' },
@@ -177,7 +220,8 @@ const Operations = () => {
                 { value: 'Pending', label: 'Pendente' },
                 { value: 'Completed', label: 'Concluído' },
                 { value: 'Canceled', label: 'Cancelado' }
-            ]
+            ],
+            sortable: true
         }
     ];
 
@@ -196,9 +240,11 @@ const Operations = () => {
 
             <EditableTable
                 columns={columns}
-                data={enhancedOperations}
+                data={sortedOperations}
                 onUpdate={handleUpdateRow}
                 onDelete={handleDelete}
+                onSort={handleSort}
+                sortConfig={sortConfig}
             />
 
             <Modal

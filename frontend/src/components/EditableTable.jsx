@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Trash, CalendarBlank } from 'phosphor-react';
+import { Trash, CalendarBlank, CaretUp, CaretDown, ArrowsDownUp } from 'phosphor-react';
 
-const EditableTable = ({ columns, data, onUpdate, onDelete }) => {
+const EditableTable = ({ columns, data, onUpdate, onDelete, onSort, sortConfig }) => {
     const [editingCell, setEditingCell] = useState({ rowId: null, colKey: null });
+    // ... (skip unchanged lines)
+
     const [tempValue, setTempValue] = useState('');
     const inputRef = useRef(null);
     const dateInputRef = useRef(null); // Ref for hidden date picker
@@ -281,8 +283,23 @@ const EditableTable = ({ columns, data, onUpdate, onDelete }) => {
                 <thead className="bg-gray-100 text-gray-700 uppercase text-xs font-bold">
                     <tr>
                         {columns.map((col) => (
-                            <th key={col.key} className="px-4 py-3 border-b border-r border-gray-300 last:border-r-0">
-                                {col.label}
+                            <th
+                                key={col.key}
+                                className={`px-4 py-3 border-b border-r border-gray-300 last:border-r-0 ${col.sortable ? 'cursor-pointer hover:bg-gray-200' : ''}`}
+                                onClick={() => col.sortable && onSort && onSort(col.key)}
+                            >
+                                <div className="flex items-center justify-between gap-1">
+                                    {col.label}
+                                    {col.sortable && sortConfig && (
+                                        <span className="text-gray-500">
+                                            {sortConfig.key === col.key ? (
+                                                sortConfig.direction === 'ascending' ? <CaretUp size={14} weight="bold" /> : <CaretDown size={14} weight="bold" />
+                                            ) : (
+                                                <ArrowsDownUp size={14} weight="bold" />
+                                            )}
+                                        </span>
+                                    )}
+                                </div>
                             </th>
                         ))}
                         <th className="px-4 py-3 border-b border-gray-300 text-center w-16">Ações</th>
