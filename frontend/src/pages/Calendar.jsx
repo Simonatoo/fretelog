@@ -169,7 +169,7 @@ const Calendar = () => {
             height: `${displayHeight}px`,
             width: width,
             position: 'absolute',
-            zIndex: (resizeState && resizeState.opId === operation.id) ? 50 : 10
+            zIndex: (resizeState && resizeState.opId === operation.id) || (selectedOperation?.id === operation.id) ? 50 : 10
         };
     };
 
@@ -576,7 +576,7 @@ const Calendar = () => {
                                         key={op.id}
                                         onClick={(e) => handleOperationClick(e, op)}
                                         style={getOperationStyle(op)}
-                                        className={`${color.bg} ${color.border} border-l-4 rounded-r-sm p-1 shadow-sm cursor-pointer hover:shadow-md transition-shadow z-10 overflow-hidden text-xs absolute`}
+                                        className={`${color.bg} ${color.border} border-l-4 rounded-r-sm p-1 shadow-sm cursor-pointer hover:shadow-md transition-shadow z-30 overflow-hidden text-xs absolute ${selectedOperation?.id === op.id ? 'outline-2 outline-blue-500 outline-offset-1 ring-2 ring-blue-200 z-50' : ''}`}
                                         title={vehicles.find(v => String(v.id) === String(op.vehicle_id))?.plate || 'Veículo não encontrado'}
                                     >
                                         <p className={`font-bold ${color.text} truncate`}>{vehicles.find(v => String(v.id) === String(op.vehicle_id))?.plate || 'Veículo não encontrado'}</p>
