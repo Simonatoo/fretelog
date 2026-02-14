@@ -488,9 +488,10 @@ const Calendar = () => {
                                         onClick={(e) => handleOperationClick(e, op)}
                                         style={getOperationStyle(op)}
                                         className={`${color.bg} ${color.border} border-l-4 rounded-r-sm p-1 shadow-sm cursor-pointer hover:shadow-md transition-shadow z-10 overflow-hidden text-xs absolute`}
-                                        title={`${op.name || 'Operação'} - ${op.client}`}
+                                        title={vehicles.find(v => v.id === op.vehicle_id)?.plate || 'Veículo não encontrado'}
                                     >
-                                        <div className={`font-bold ${color.text} truncate`}>{getCompanyName(op.company_id)}</div>
+                                        <p className={`font-bold ${color.text} truncate`}>{vehicles.find(v => v.id === op.vehicle_id)?.plate || 'Veículo não encontrado'}</p>
+                                        <p className={`${color.text} truncate`}>{getCompanyName(op.company_id)}</p>
 
                                         {/* Top Resize Handle */}
                                         <div
