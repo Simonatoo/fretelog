@@ -23,6 +23,7 @@ const Calendar = () => {
         driver_value: '',
         support_value: ''
     });
+    const [resizeState, setResizeState] = useState(null); // { opId, startY, startHeight, startTop, currentHeight, currentTop, direction }
 
     useEffect(() => {
         fetchData();
@@ -151,13 +152,121 @@ const Calendar = () => {
         const leftOffset = `calc(4rem + ((100% - 4rem) / 7 * ${dayIndex}))`;
         const width = `calc((100% - 4rem) / 7 - 4px)`; // -4px for gap
 
+        // Override height/top if resizing
+        const displayHeight = (resizeState && resizeState.opId === operation.id)
+            ? resizeState.currentHeight
+            : height;
+
+        const displayTop = (resizeState && resizeState.opId === operation.id && resizeState.currentTop !== undefined)
+            ? resizeState.currentTop
+            : top;
+
         return {
-            top: `${top}px`,
+            top: `${displayTop}px`,
             left: leftOffset,
-            height: `${height}px`,
+            height: `${displayHeight}px`,
             width: width,
-            position: 'absolute'
+            position: 'absolute',
+            zIndex: (resizeState && resizeState.opId === operation.id) ? 50 : 10
         };
+    };
+
+    // Resize Logic
+    useEffect(() => {
+        const handleMouseMove = (e) => {
+            if (!resizeState) return;
+            const deltaY = e.clientY - resizeState.startY;
+
+            if (resizeState.direction === 'bottom') {
+                let newHeight = resizeState.startHeight + deltaY;
+                if (newHeight < 20) newHeight = 20;
+                setResizeState(prev => ({ ...prev, currentHeight: newHeight }));
+            }
+            else if (resizeState.direction === 'top') {
+                let newTop = resizeState.startTop + deltaY;
+                let newHeight = resizeState.startHeight - deltaY;
+
+                // Min height check
+                if (newHeight < 20) {
+                    // Don't allow moving top further down if height is min
+                    newHeight = 20;
+                    newTop = resizeState.startTop + (resizeState.startHeight - 20);
+                }
+
+                setResizeState(prev => ({ ...prev, currentHeight: newHeight, currentTop: newTop }));
+            }
+        };
+
+        const handleMouseUp = async (e) => {
+            if (!resizeState) return;
+
+            const hourHeight = 80;
+            let updatedOp = { ...operations.find(o => o.id === resizeState.opId) };
+            const payload = {};
+
+            // Calculate new duration
+            const newDuration = resizeState.currentHeight / hourHeight;
+            const formattedDuration = newDuration.toFixed(2);
+            updatedOp.estimated_time = formattedDuration;
+            payload.estimated_time = formattedDuration;
+
+            // If top resize, calculate new start time
+            if (resizeState.direction === 'top') {
+                const totalHours = resizeState.currentTop / hourHeight;
+                const newStartHour = Math.floor(totalHours);
+                const newStartMin = Math.round((totalHours - newStartHour) * 60);
+
+                const originalDate = new Date(updatedOp.operation_date);
+                // Set UTC time because that's how we parse it for display
+                originalDate.setUTCHours(newStartHour, newStartMin, 0, 0);
+
+                updatedOp.operation_date = originalDate.toISOString();
+                payload.operation_date = originalDate.toISOString();
+            }
+
+            try {
+                // Optimistic update
+                setOperations(prev => prev.map(op => op.id === resizeState.opId ? updatedOp : op));
+                await api.put(`/operations/${resizeState.opId}`, payload);
+            } catch (error) {
+                console.error('Error resizing operation:', error);
+                alert('Erro ao redimensionar operação');
+                fetchData(); // Revert
+            }
+
+            setResizeState(null);
+        };
+
+        if (resizeState) {
+            window.addEventListener('mousemove', handleMouseMove);
+            window.addEventListener('mouseup', handleMouseUp);
+        }
+
+        return () => {
+            window.removeEventListener('mousemove', handleMouseMove);
+            window.removeEventListener('mouseup', handleMouseUp);
+        };
+    }, [resizeState, operations]);
+
+    const handleResizeStart = (e, op, direction) => {
+        e.stopPropagation(); // Don't open edit modal
+        e.preventDefault();
+
+        const element = e.target.parentElement;
+        const rect = element.getBoundingClientRect();
+        // We need the relative top (offsetTop) for calculations, not client rect top
+        // But element.offsetTop is relative to parent.
+        const startTop = element.offsetTop;
+
+        setResizeState({
+            opId: op.id,
+            direction,
+            startY: e.clientY,
+            startHeight: rect.height,
+            startTop: startTop,
+            currentHeight: rect.height,
+            currentTop: startTop
+        });
     };
 
     const getCompanyName = (id) => {
@@ -372,6 +481,13 @@ const Calendar = () => {
                                         title={`${op.name || 'Operação'} - ${op.client}`}
                                     >
                                         <div className={`font-bold ${color.text} truncate`}>{getCompanyName(op.company_id)}</div>
+
+                                        {/* Top Resize Handle */}
+                                        <div
+                                            className="absolute top-0 left-0 w-full h-2 cursor-ns-resize hover:bg-black/10 z-20"
+                                            onMouseDown={(e) => handleResizeStart(e, op, 'top')}
+                                        ></div>
+
                                         <p className={`${color.text} truncate`}>R$ {op.operation_value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
                                         <div className="mt-1">
                                             <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${op.status === 'Completed' ? 'bg-green-100 text-green-700' :
@@ -382,6 +498,12 @@ const Calendar = () => {
                                             </span>
                                         </div>
                                         <div className={`${color.subtext} truncate`}>{op.client}</div>
+
+                                        {/* Bottom Resize Handle */}
+                                        <div
+                                            className="absolute bottom-0 left-0 w-full h-2 cursor-ns-resize hover:bg-black/10 z-20"
+                                            onMouseDown={(e) => handleResizeStart(e, op, 'bottom')}
+                                        ></div>
                                     </div>
                                 );
                             })}
