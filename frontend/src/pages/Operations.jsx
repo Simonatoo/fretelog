@@ -259,7 +259,7 @@ const Operations = () => {
             options: employees.map(e => ({ value: e.id, label: e.name })),
             sortable: true
         },
-        { key: 'support_id', label: 'Ajudante', type: 'select', options: employees.map(e => ({ value: e.id, label: e.name })) },
+        { key: 'support_id', label: 'Ajudante', type: 'select', options: employees.map(e => ({ value: e.id, label: e.name })), nullable: true },
         { key: 'operation_value', label: 'Valor Frete', type: 'number', sortable: true },
         { key: 'driver_value', label: 'Valor Motorista', type: 'number' },
         { key: 'support_value', label: 'Valor Ajudante', type: 'number' },

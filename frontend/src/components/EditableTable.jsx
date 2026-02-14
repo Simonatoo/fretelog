@@ -113,6 +113,12 @@ const EditableTable = ({ columns, data, onUpdate, onDelete, onSort, sortConfig }
             }
         }
 
+
+        // Handle Nullable Selects
+        if (col.type === 'select' && col.nullable && finalValue === '') {
+            finalValue = null;
+        }
+
         if (finalValue !== row[col.key]) {
             onUpdate(row.id, col.key, finalValue);
         }
@@ -174,6 +180,7 @@ const EditableTable = ({ columns, data, onUpdate, onDelete, onSort, sortConfig }
                         onKeyDown={(e) => handleKeyDown(e, row, col)}
                         className="w-full p-1 border-2 border-blue-500 rounded focus:outline-none"
                     >
+                        {col.nullable && <option value="">Nenhum</option>}
                         {col.options.map(opt => (
                             <option key={opt.value} value={opt.value}>
                                 {opt.label}
