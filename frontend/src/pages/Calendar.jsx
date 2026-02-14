@@ -149,6 +149,30 @@ const Calendar = () => {
         return company ? company.name : 'Empresa não encontrada';
     };
 
+    const getVehicleColor = (vehicleId) => {
+        const colors = [
+            { bg: 'bg-red-100', border: 'border-red-500', text: 'text-red-900', subtext: 'text-red-800' },
+            { bg: 'bg-orange-100', border: 'border-orange-500', text: 'text-orange-900', subtext: 'text-orange-800' },
+            { bg: 'bg-amber-100', border: 'border-amber-500', text: 'text-amber-900', subtext: 'text-amber-800' },
+            { bg: 'bg-green-100', border: 'border-green-500', text: 'text-green-900', subtext: 'text-green-800' },
+            { bg: 'bg-emerald-100', border: 'border-emerald-500', text: 'text-emerald-900', subtext: 'text-emerald-800' },
+            { bg: 'bg-teal-100', border: 'border-teal-500', text: 'text-teal-900', subtext: 'text-teal-800' },
+            { bg: 'bg-cyan-100', border: 'border-cyan-500', text: 'text-cyan-900', subtext: 'text-cyan-800' },
+            { bg: 'bg-sky-100', border: 'border-sky-500', text: 'text-sky-900', subtext: 'text-sky-800' },
+            { bg: 'bg-blue-100', border: 'border-blue-500', text: 'text-blue-900', subtext: 'text-blue-800' },
+            { bg: 'bg-indigo-100', border: 'border-indigo-500', text: 'text-indigo-900', subtext: 'text-indigo-800' },
+            { bg: 'bg-violet-100', border: 'border-violet-500', text: 'text-violet-900', subtext: 'text-violet-800' },
+            { bg: 'bg-purple-100', border: 'border-purple-500', text: 'text-purple-900', subtext: 'text-purple-800' },
+            { bg: 'bg-fuchsia-100', border: 'border-fuchsia-500', text: 'text-fuchsia-900', subtext: 'text-fuchsia-800' },
+            { bg: 'bg-pink-100', border: 'border-pink-500', text: 'text-pink-900', subtext: 'text-pink-800' },
+            { bg: 'bg-rose-100', border: 'border-rose-500', text: 'text-rose-900', subtext: 'text-rose-800' },
+        ];
+
+        if (!vehicleId) return colors[8]; // Default to blue
+        const index = vehicleId % colors.length;
+        return colors[index];
+    };
+
     const filteredOperations = getFilteredOperations();
 
     return (
@@ -247,18 +271,20 @@ const Calendar = () => {
                             ))}
 
                             {/* Operations Overlay */}
-                            {filteredOperations.map((op) => (
-                                console.log(op),
-                                <div
-                                    key={op.id}
-                                    style={getOperationStyle(op)}
-                                    className="bg-blue-100 border-l-4 border-blue-500 rounded-r-sm p-1 shadow-sm cursor-pointer hover:shadow-md transition-shadow z-10 overflow-hidden text-xs absolute"
-                                    title={`${op.name || 'Operação'} - ${op.client}`}
-                                >
-                                    <div className="font-bold text-blue-900 truncate">{getCompanyName(op.company_id)}</div>
-                                    <div className="text-blue-800 truncate">{op.client}</div>
-                                </div>
-                            ))}
+                            {filteredOperations.map((op) => {
+                                const color = getVehicleColor(op.vehicle_id);
+                                return (
+                                    <div
+                                        key={op.id}
+                                        style={getOperationStyle(op)}
+                                        className={`${color.bg} ${color.border} border-l-4 rounded-r-sm p-1 shadow-sm cursor-pointer hover:shadow-md transition-shadow z-10 overflow-hidden text-xs absolute`}
+                                        title={`${op.name || 'Operação'} - ${op.client}`}
+                                    >
+                                        <div className={`font-bold ${color.text} truncate`}>{getCompanyName(op.company_id)}</div>
+                                        <div className={`${color.subtext} truncate`}>{op.client}</div>
+                                    </div>
+                                );
+                            })}
                         </div>
                     </div>
                 </div>
