@@ -7,8 +7,22 @@ const Calendar = () => {
     const [operations, setOperations] = useState([]);
     const [vehicles, setVehicles] = useState([]);
     const [companies, setCompanies] = useState([]);
+    const [employees, setEmployees] = useState([]);
     const [selectedVehicleIds, setSelectedVehicleIds] = useState(new Set());
     const [loading, setLoading] = useState(true);
+    const [selectedOperation, setSelectedOperation] = useState(null);
+    const [editFormData, setEditFormData] = useState({
+        company_id: '',
+        driver_id: '',
+        support_id: '',
+        vehicle_id: '',
+        date: '',
+        time: '',
+        status: '',
+        operation_value: '',
+        driver_value: '',
+        support_value: ''
+    });
 
     useEffect(() => {
         fetchData();
@@ -16,15 +30,17 @@ const Calendar = () => {
 
     const fetchData = async () => {
         try {
-            const [opsResponse, vehiclesResponse, companiesResponse] = await Promise.all([
+            const [opsResponse, vehiclesResponse, companiesResponse, employeesResponse] = await Promise.all([
                 api.get('/operations'),
                 api.get('/vehicles'),
-                api.get('/companies')
+                api.get('/companies'),
+                api.get('/employees')
             ]);
 
             setOperations(opsResponse.data);
             setVehicles(vehiclesResponse.data);
             setCompanies(companiesResponse.data);
+            setEmployees(employeesResponse.data);
 
             // Initially select all vehicles
             const allVehicleIds = new Set(vehiclesResponse.data.map(v => v.id));
@@ -97,7 +113,7 @@ const Calendar = () => {
         const end = addDays(start, 7);
 
         return operations.filter(op => {
-            const opDate = new Date(op.date);
+            const opDate = new Date(op.operation_date);
             // Check date range
             if (opDate < start || opDate >= end) return false;
             // Check vehicle filter
@@ -171,6 +187,80 @@ const Calendar = () => {
         if (!vehicleId) return colors[8]; // Default to blue
         const index = vehicleId % colors.length;
         return colors[index];
+    };
+
+    const handleOperationClick = (e, op) => {
+        e.stopPropagation(); // Prevent bubbling if needed
+        setSelectedOperation(op);
+
+        // Parse date for inputs
+        const opDate = new Date(op.operation_date);
+        // We use local time for the inputs to match what the user sees on the calendar (which uses UTC methods but displays as if it was local time... wait)
+        // The calendar uses getUTCHours() to position.
+        // So we should extract UTC parts to populate the inputs as "local" values.
+        const year = opDate.getUTCFullYear();
+        const month = String(opDate.getUTCMonth() + 1).padStart(2, '0');
+        const day = String(opDate.getUTCDate()).padStart(2, '0');
+        const hour = String(opDate.getUTCHours()).padStart(2, '0');
+        const minute = String(opDate.getUTCMinutes()).padStart(2, '0');
+
+        setEditFormData({
+            company_id: op.company_id || '',
+            driver_id: op.driver_id || '',
+            support_id: op.support_id || '',
+            vehicle_id: op.vehicle_id || '',
+            date: `${year}-${month}-${day}`,
+            time: `${hour}:${minute}`,
+            status: op.status || '',
+            operation_value: op.operation_value || '',
+            driver_value: op.driver_value || '',
+            support_value: op.support_value || ''
+        });
+    };
+
+    const handleEditChange = (e) => {
+        const { name, value } = e.target;
+        setEditFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleSaveOperation = async () => {
+        if (!selectedOperation) return;
+
+        try {
+            // Construct ISO date from date and time inputs
+            // We treat the input date/time as UTC to maintain consistency with how we read it
+            const [year, month, day] = editFormData.date.split('-').map(Number);
+            const [hours, minutes] = editFormData.time.split(':').map(Number);
+
+            // Create date using UTC
+            const newDate = new Date(Date.UTC(year, month - 1, day, hours, minutes));
+
+            const updatedOp = {
+                ...selectedOperation,
+                company_id: editFormData.company_id,
+                driver_id: editFormData.driver_id,
+                support_id: editFormData.support_id,
+                vehicle_id: editFormData.vehicle_id,
+                operation_date: newDate.toISOString(),
+                status: editFormData.status,
+                operation_value: editFormData.operation_value,
+                driver_value: editFormData.driver_value,
+                support_value: editFormData.support_value
+            };
+
+            await api.put(`/operations/${selectedOperation.id}`, updatedOp);
+
+            // Update local state to reflect changes immediately (optimistic or re-fetch)
+            setOperations(prev => prev.map(op => op.id === selectedOperation.id ? updatedOp : op));
+
+            // Also fetch to be sure
+            fetchData();
+
+            setSelectedOperation(null);
+        } catch (error) {
+            console.error('Error saving operation:', error);
+            alert('Erro ao salvar operação.');
+        }
     };
 
     const filteredOperations = getFilteredOperations();
@@ -276,11 +366,18 @@ const Calendar = () => {
                                 return (
                                     <div
                                         key={op.id}
+                                        onClick={(e) => handleOperationClick(e, op)}
                                         style={getOperationStyle(op)}
                                         className={`${color.bg} ${color.border} border-l-4 rounded-r-sm p-1 shadow-sm cursor-pointer hover:shadow-md transition-shadow z-10 overflow-hidden text-xs absolute`}
                                         title={`${op.name || 'Operação'} - ${op.client}`}
                                     >
                                         <div className={`font-bold ${color.text} truncate`}>{getCompanyName(op.company_id)}</div>
+                                        <p className={`${color.text} truncate`}>R$ {op.operation_value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+                                        <div className="mt-1">
+                                            <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-white/50 ${color.text}`}>
+                                                {op.status}
+                                            </span>
+                                        </div>
                                         <div className={`${color.subtext} truncate`}>{op.client}</div>
                                     </div>
                                 );
@@ -289,6 +386,164 @@ const Calendar = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Operations editable */}
+            {/* Operations editable */}
+            {selectedOperation && (
+                <div className='flex flex-col gap-3 p-4 rounded-lg bg-white shadow-md border border-gray-200 w-80 shrink-0 h-fit'>
+                    <div className="flex justify-between items-center mb-2">
+                        <h1 className='text-lg font-bold text-gray-800'>Editar Operação</h1>
+                        <button onClick={() => setSelectedOperation(null)} className="text-gray-400 hover:text-gray-600">
+                            X
+                        </button>
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                        <label className="text-xs font-semibold text-gray-600">Operação</label>
+                        <select
+                            name="company_id"
+                            value={editFormData.company_id}
+                            onChange={handleEditChange}
+                            className='w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white'
+                        >
+                            <option value="">Selecione a empresa</option>
+                            {companies.map(c => (
+                                <option key={c.id} value={c.id}>{c.name}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                        <label className="text-xs font-semibold text-gray-600">Motorista</label>
+                        <select
+                            name="driver_id"
+                            value={editFormData.driver_id}
+                            onChange={handleEditChange}
+                            className='w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white'
+                        >
+                            <option value="">Selecione o motorista</option>
+                            {employees.map(e => (
+                                <option key={e.id} value={e.id}>{e.name}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                        <label className="text-xs font-semibold text-gray-600">Ajudante</label>
+                        <select
+                            name="support_id"
+                            value={editFormData.support_id}
+                            onChange={handleEditChange}
+                            className='w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white'
+                        >
+                            <option value="">Selecione o ajudante (opcional)</option>
+                            {employees.map(e => (
+                                <option key={e.id} value={e.id}>{e.name}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                        <label className="text-xs font-semibold text-gray-600">Veículo</label>
+                        <select
+                            name="vehicle_id"
+                            value={editFormData.vehicle_id}
+                            onChange={handleEditChange}
+                            className='w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white'
+                        >
+                            <option value="">Selecione um veículo</option>
+                            {vehicles.map(v => (
+                                <option key={v.id} value={v.id}>{v.plate} - {v.type}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                        <label className="text-xs font-semibold text-gray-600">Valor Frete</label>
+                        <input
+                            name="operation_value"
+                            value={editFormData.operation_value}
+                            onChange={handleEditChange}
+                            type='number'
+                            step="0.01"
+                            placeholder='0.00'
+                            className='w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all'
+                        />
+                    </div>
+
+                    <div className="flex gap-2">
+                        <div className="flex flex-col gap-1 flex-1">
+                            <label className="text-xs font-semibold text-gray-600">Valor Motorista</label>
+                            <input
+                                name="driver_value"
+                                value={editFormData.driver_value}
+                                onChange={handleEditChange}
+                                type='number'
+                                step="0.01"
+                                placeholder='0.00'
+                                className='w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all'
+                            />
+                        </div>
+                        <div className="flex flex-col gap-1 flex-1">
+                            <label className="text-xs font-semibold text-gray-600">Valor Ajudante</label>
+                            <input
+                                name="support_value"
+                                value={editFormData.support_value}
+                                onChange={handleEditChange}
+                                type='number'
+                                step="0.01"
+                                placeholder='0.00'
+                                className='w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all'
+                            />
+                        </div>
+                    </div>
+
+                    <div className="flex gap-2">
+                        <div className="flex flex-col gap-1 flex-1">
+                            <label className="text-xs font-semibold text-gray-600">Data</label>
+                            <input
+                                name="date"
+                                value={editFormData.date}
+                                onChange={handleEditChange}
+                                type='date'
+                                className='w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all'
+                            />
+                        </div>
+                        <div className="flex flex-col gap-1 w-24">
+                            <label className="text-xs font-semibold text-gray-600">Hora</label>
+                            <input
+                                name="time"
+                                value={editFormData.time}
+                                onChange={handleEditChange}
+                                type='time'
+                                className='w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all'
+                            />
+                        </div>
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                        <label className="text-xs font-semibold text-gray-600">Status</label>
+                        <select
+                            name="status"
+                            value={editFormData.status}
+                            onChange={handleEditChange}
+                            className='w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white'
+                        >
+                            <option value="Pendente">Pendente</option>
+                            <option value="Em Andamento">Em Andamento</option>
+                            <option value="Concluída">Concluída</option>
+                            <option value="Cancelada">Cancelada</option>
+                        </select>
+                    </div>
+
+                    <button
+                        onClick={handleSaveOperation}
+                        className='w-full p-2 mt-2 bg-blue-600 text-white rounded-md cursor-pointer hover:bg-blue-700 font-medium transition-colors shadow-sm'
+                    >
+                        Salvar Alterações
+                    </button>
+                </div>
+            )}
         </div>
     );
 };
